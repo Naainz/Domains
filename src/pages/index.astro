@@ -104,7 +104,7 @@ import Layout from '../layouts/Layout.astro';
               <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domainName}', ${index})">Show WHOIS Data</button>
               <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domainName}', ${index})">DNS</button>
               <div id="whois-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
-              <div id="dns-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
+              <div id="dns-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre></pre></div>
             </div>
           `;
         }).join('');
@@ -126,26 +126,21 @@ import Layout from '../layouts/Layout.astro';
         }
       };
 
-	  const fetchDnsData = async (domainName, index) => {
-		const dnsDataDiv = document.getElementById(`dns-data-${index}`).querySelector('pre');
-		if (dnsDataDiv.parentElement.classList.contains('hidden')) {
-			dnsDataDiv.parentElement.classList.remove('hidden');
-			try {
-			const response = await fetch(`/api/dns.json?domain=${domainName}`);
-			const result = await response.json();
-			if (result.dnsData) {
-				dnsDataDiv.textContent = result.dnsData;
-			} else {
-				dnsDataDiv.textContent = result.error || 'No DNS records available.';
-			}
-			} catch (error) {
-			dnsDataDiv.textContent = 'Error retrieving DNS data.';
-			}
-		} else {
-			dnsDataDiv.parentElement.classList.add('hidden');
-		}
-		};
-
+      const fetchDnsData = async (domainName, index) => {
+        const dnsDataDiv = document.getElementById(`dns-data-${index}`).querySelector('pre');
+        if (dnsDataDiv.parentElement.classList.contains('hidden')) {
+          dnsDataDiv.parentElement.classList.remove('hidden');
+          try {
+            const response = await fetch(`/api/dns.json?domain=${domainName}`);
+            const result = await response.json();
+            dnsDataDiv.textContent = result.dnsData || 'No DNS records available.';
+          } catch (error) {
+            dnsDataDiv.textContent = 'Error retrieving DNS data.';
+          }
+        } else {
+          dnsDataDiv.parentElement.classList.add('hidden');
+        }
+      };
 
       window.fetchWhoisData = fetchWhoisData;
       window.fetchDnsData = fetchDnsData;
@@ -181,7 +176,7 @@ import Layout from '../layouts/Layout.astro';
                 <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domain}', 0)">Show WHOIS Data</button>
                 <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
                 <div id="whois-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre>${whoisData}</pre></div>
-                <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
+                <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre></pre></div>
               </div>
             `;
           } catch (error) {
