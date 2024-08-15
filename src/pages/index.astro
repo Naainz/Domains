@@ -32,6 +32,15 @@ import Layout from '../layouts/Layout.astro';
       const checkButton = document.getElementById('check-button');
       const resultContainer = document.getElementById('result-container');
 
+      const showLoading = () => {
+        resultContainer.innerHTML = `
+          <div class="flex justify-center items-center space-x-2">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-8 w-8"></div>
+            <p class="text-blue-500">I'm searching for the domain name "${domain}"'s availability, please wait...</p>
+          </div>
+        `;
+      };
+
       domainInput.addEventListener('input', (e) => {
         const target = e.target as HTMLInputElement;
         domain = target.value;
@@ -44,6 +53,7 @@ import Layout from '../layouts/Layout.astro';
         }
 
         if (domain) {
+          showLoading();
           try {
             const response = await fetch(`/api/check-domain.json?domain=${domain}`);
             const result = await response.json();
@@ -52,7 +62,7 @@ import Layout from '../layouts/Layout.astro';
 
             resultContainer.innerHTML = `
               <p class="text-lg font-semibold ${availability === 'Available' ? 'text-green-500' : 'text-red-500'}">
-                ${availability}
+                The domain "${domain}" is ${availability}.
               </p>
               ${availability === 'Registered' ? `
                 <div class="mt-4 text-left">
@@ -72,10 +82,26 @@ import Layout from '../layouts/Layout.astro';
             `;
           } catch (error) {
             console.error('Error checking domain:', error);
-            resultContainer.innerHTML = '<p class="text-red-500">Error checking domain.</p>';
+            resultContainer.innerHTML = `<p class="text-red-500">Error checking domain "${domain}".</p>`;
           }
         }
       });
     });
   </script>
+
+  <style>
+    .loader {
+      border-top-color: #3498db;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </Layout>
