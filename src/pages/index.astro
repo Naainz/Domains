@@ -61,13 +61,12 @@ import Layout from '../layouts/Layout.astro';
         'au', 'eu', 'cn', 'in', 'br', 'ru', 'za', 'nz'
       ];
 
-      const domainInput = document.getElementById('domain-input') as HTMLInputElement;
+      const domainInput = document.getElementById('domain-input');
       const checkButton = document.getElementById('check-button');
       const expandSearchOptions = document.getElementById('expand-search-options');
       const searchOptions = document.getElementById('search-options');
-      const nameserverInput = document.getElementById('nameserver-input') as HTMLInputElement;
-      const registrarInput = document.getElementById('registrar-input') as HTMLInputElement;
-      const searchAlternativeButton = document.getElementById('search-alternative-button');
+      const nameserverInput = document.getElementById('nameserver-input');
+      const registrarInput = document.getElementById('registrar-input');
       const resultContainer = document.getElementById('result-container');
 
       expandSearchOptions.addEventListener('click', () => {
@@ -143,7 +142,8 @@ import Layout from '../layouts/Layout.astro';
           const result = await response.json();
           const whoisData = result.whoisData || 'No WHOIS data available.';
 
-          const isNotRegistered = whoisData.toLowerCase().includes('not found');
+          const firstLine = whoisData.split('\n')[0].toLowerCase();
+          const isNotRegistered = firstLine.includes('not found') || firstLine.includes('no match');
           const availabilityText = isNotRegistered 
             ? `<p class="font-medium text-green-500">Not Registered</p>`
             : `<p class="font-medium text-red-500">Registered</p>`;
