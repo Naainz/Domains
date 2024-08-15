@@ -1,15 +1,47 @@
 import type { APIRoute } from 'astro';
+import whois from 'whois';
 
-export const get: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const domain = url.searchParams.get('domain');
 
-  const available = domain && domain.length > 0 && domain.length < 15; // Example condition
+  if (!domain || domain.length === 0) {
+    return new Response(
+      JSON.stringify({ error: 'No domain provided' }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        status: 400
+      }
+    );
+  }
 
-  return new Response(
-    JSON.stringify({ available }),
-    {
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
+  try {
+    const whoisData = await new Promise<string>((resolve, reject) => {
+      whois.lookup(domain, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
+      });
+    });
+
+    const isRegistered = !whoisData.includes('No match for domain');
+
+    return new Response(
+      JSON.stringify({ available: !isRegistered, whoisData }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: 'Error performing WHOIS lookup' }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
+  }
 };
