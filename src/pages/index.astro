@@ -93,25 +93,28 @@ import Layout from '../layouts/Layout.astro';
       const displayResults = (availabilityText, whoisData, isNotRegistered) => {
         const buyButton = isNotRegistered
           ? `<a href="https://www.godaddy.com/domainsearch/find?domainToCheck=${domain}" target="_blank" class="ml-auto bg-green-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-green-600 transition">
-              <img src="godaddy.svg" alt="GoDaddy" class="w-6 h-6 mr-2">Buy with GoDaddy
+              <img src="/path/to/godaddy-logo.png" alt="GoDaddy" class="w-6 h-6 mr-2">Buy with GoDaddy
             </a>`
           : '';
         
         resultContainer.innerHTML = `
-          <div class="p-4 mb-4 border rounded-md shadow-sm text-left hover:bg-gray-100 flex items-center">
-            <div>
-              <h2 class="font-bold">${domain}</h2>
-              ${availabilityText}
-              <button class="mt-2 text-blue-500 text-sm" onclick="toggleVisibility('whois-data')">Show WHOIS Data</button>
-              <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
-              <div id="whois-data" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre>${whoisData}</pre></div>
-              <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre>No DNS data fetched yet.</pre></div>
-            </div>
+          <div class="p-4 mb-4 border rounded-md shadow-sm text-left hover:bg-gray-100">
+            <h2 class="font-bold">${domain}</h2>
+            ${availabilityText}
             ${buyButton}
+            <button class="mt-2 text-blue-500 text-sm" onclick="toggleVisibility('whois-data')">Show WHOIS Data</button>
+            <div id="whois-data" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto">
+              <pre class="whitespace-pre">${whoisData}</pre>
+            </div>
+            <button class="mt-2 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
+            <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto">
+              <pre class="whitespace-pre">No DNS data fetched yet.</pre>
+            </div>
           </div>
         `;
       };
 
+      // Make the toggleVisibility function globally accessible
       window.toggleVisibility = (id) => {
         const element = document.getElementById(id);
         if (element) {
@@ -119,16 +122,17 @@ import Layout from '../layouts/Layout.astro';
         }
       };
 
+      // Fetch DNS Data
       window.fetchDnsData = async (domainName, index) => {
         const dnsDataDiv = document.getElementById(`dns-data-${index}`);
         if (dnsDataDiv) {
           try {
             const response = await fetch(`/api/dns.json?domain=${domainName}`);
             const result = await response.json();
-            dnsDataDiv.innerHTML = `<pre>${result.dnsData || 'No DNS records available.'}</pre>`;
+            dnsDataDiv.innerHTML = `<pre class="whitespace-pre">${result.dnsData || 'No DNS records available.'}</pre>`;
             dnsDataDiv.classList.remove('hidden');
           } catch (error) {
-            dnsDataDiv.innerHTML = `<pre>Error retrieving DNS data.</pre>`;
+            dnsDataDiv.innerHTML = `<pre class="whitespace-pre">Error retrieving DNS data.</pre>`;
             dnsDataDiv.classList.remove('hidden');
           }
         }
@@ -186,6 +190,26 @@ import Layout from '../layouts/Layout.astro';
       100% {
         transform: rotate(360deg);
       }
+    }
+
+    /* Ensuring horizontal scroll only for WHOIS and DNS data */
+    .overflow-x-auto {
+      overflow-x: auto;
+    }
+
+    .whitespace-pre {
+      white-space: pre;
+    }
+
+    .max-w-full {
+      max-width: 100%;
+    }
+
+    /* Prevent the pre elements from overflowing */
+    pre {
+      max-width: 100%;
+      overflow-x: auto;
+      white-space: pre-wrap;
     }
   </style>
 </Layout>
