@@ -28,9 +28,21 @@ import Layout from '../layouts/Layout.astro';
       let availability = null;
       let whoisData = '';
 
+      const validTLDs = [
+        'com', 'net', 'org', 'edu', 'gov', 'co', 'io', 'biz', 'info', 'me', 'us', 'uk', 'ca', 'de', 'jp', 'fr',
+        'au', 'eu', 'cn', 'in', 'br', 'ru', 'za', 'nz'
+      ];
+
       const domainInput = document.getElementById('domain-input') as HTMLInputElement;
       const checkButton = document.getElementById('check-button');
       const resultContainer = document.getElementById('result-container');
+
+      const isValidTLD = (domain) => {
+        const parts = domain.split('.');
+        if (parts.length < 2) return false;
+        const tld = parts[parts.length - 1].toLowerCase();
+        return validTLDs.includes(tld);
+      };
 
       const showLoading = () => {
         resultContainer.innerHTML = `
@@ -48,7 +60,12 @@ import Layout from '../layouts/Layout.astro';
 
       checkButton.addEventListener('click', async () => {
         if (domain.includes(' ')) {
-          resultContainer.innerHTML = '<p class="text-red-500">Invalid entry</p>';
+          resultContainer.innerHTML = '<p class="text-red-500">Invalid entry: domain name cannot contain spaces.</p>';
+          return;
+        }
+
+        if (!isValidTLD(domain)) {
+          resultContainer.innerHTML = '<p class="text-red-500">Invalid entry: domain must have a valid TLD.</p>';
           return;
         }
 
