@@ -38,6 +38,11 @@ import Layout from '../layouts/Layout.astro';
       });
 
       checkButton.addEventListener('click', async () => {
+        if (domain.includes(' ')) {
+          resultContainer.innerHTML = '<p class="text-red-500">Invalid entry</p>';
+          return;
+        }
+
         if (domain) {
           try {
             const response = await fetch(`/api/check-domain.json?domain=${domain}`);
