@@ -93,7 +93,7 @@ import Layout from '../layouts/Layout.astro';
       const displayResults = (availabilityText, whoisData, isNotRegistered) => {
         const buyButton = isNotRegistered
           ? `<a href="https://www.godaddy.com/domainsearch/find?domainToCheck=${domain}" target="_blank" class="ml-auto bg-green-500 text-white px-4 py-2 rounded-md flex items-center hover:bg-green-600 transition">
-              <img src="/path/to/godaddy-logo.png" alt="GoDaddy" class="w-6 h-6 mr-2">Buy with GoDaddy
+              <img src="godaddy.svg" alt="GoDaddy" class="w-6 h-6 mr-2">Buy with GoDaddy
             </a>`
           : '';
         
@@ -114,7 +114,6 @@ import Layout from '../layouts/Layout.astro';
         `;
       };
 
-      // Make the toggleVisibility function globally accessible
       window.toggleVisibility = (id) => {
         const element = document.getElementById(id);
         if (element) {
@@ -122,7 +121,6 @@ import Layout from '../layouts/Layout.astro';
         }
       };
 
-      // Fetch DNS Data
       window.fetchDnsData = async (domainName, index) => {
         const dnsDataDiv = document.getElementById(`dns-data-${index}`);
         if (dnsDataDiv) {
