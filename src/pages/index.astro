@@ -106,7 +106,7 @@ import Layout from '../layouts/Layout.astro';
               <pre class="whitespace-pre">${whoisData}</pre>
             </div>
             <button class="mt-2 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
-            <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto">
+            <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto" data-loaded="false">
               <pre class="whitespace-pre">No DNS data fetched yet.</pre>
             </div>
           </div>
@@ -123,15 +123,17 @@ import Layout from '../layouts/Layout.astro';
       window.fetchDnsData = async (domainName, index) => {
         const dnsDataDiv = document.getElementById(`dns-data-${index}`);
         if (dnsDataDiv) {
-          try {
-            const response = await fetch(`/api/dns.json?domain=${domainName}`);
-            const result = await response.json();
-            dnsDataDiv.innerHTML = `<pre class="whitespace-pre">${result.dnsData || 'No DNS records available.'}</pre>`;
-            dnsDataDiv.classList.remove('hidden');
-          } catch (error) {
-            dnsDataDiv.innerHTML = `<pre class="whitespace-pre">Error retrieving DNS data.</pre>`;
-            dnsDataDiv.classList.remove('hidden');
+          if (dnsDataDiv.getAttribute('data-loaded') === 'false') {
+            try {
+              const response = await fetch(`/api/dns.json?domain=${domainName}`);
+              const result = await response.json();
+              dnsDataDiv.innerHTML = `<pre class="whitespace-pre">${result.dnsData || 'No DNS records available.'}</pre>`;
+              dnsDataDiv.setAttribute('data-loaded', 'true');
+            } catch (error) {
+              dnsDataDiv.innerHTML = `<pre class="whitespace-pre">Error retrieving DNS data.</pre>`;
+            }
           }
+          dnsDataDiv.classList.toggle('hidden');
         }
       };
 
