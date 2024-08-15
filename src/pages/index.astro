@@ -103,16 +103,16 @@ import Layout from '../layouts/Layout.astro';
               <p class="font-medium">${registrarName}</p>
               ${hiddenInfo}
               <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domainName}', ${index})">Show WHOIS Data</button>
-              <div id="whois-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"></div>
+              <div id="whois-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
             </div>
           `;
         }).join('');
       };
 
       const fetchWhoisData = async (domainName, index) => {
-        const whoisDataDiv = document.getElementById(`whois-data-${index}`);
-        if (whoisDataDiv.classList.contains('hidden')) {
-          whoisDataDiv.classList.remove('hidden');
+        const whoisDataDiv = document.getElementById(`whois-data-${index}`).querySelector('pre');
+        if (whoisDataDiv.parentElement.classList.contains('hidden')) {
+          whoisDataDiv.parentElement.classList.remove('hidden');
           try {
             const response = await fetch(`/api/check-domain.json?domain=${domainName}`);
             const result = await response.json();
@@ -121,7 +121,7 @@ import Layout from '../layouts/Layout.astro';
             whoisDataDiv.textContent = 'Error retrieving WHOIS data.';
           }
         } else {
-          whoisDataDiv.classList.add('hidden');
+          whoisDataDiv.parentElement.classList.add('hidden');
         }
       };
 
@@ -156,7 +156,7 @@ import Layout from '../layouts/Layout.astro';
                 <h2 class="font-bold">${domain}</h2>
                 <p class="font-medium">${availability}</p>
                 <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domain}', 0)">Show WHOIS Data</button>
-                <div id="whois-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md">${whoisData}</div>
+                <div id="whois-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre>${whoisData}</pre></div>
               </div>
             `;
           } catch (error) {
