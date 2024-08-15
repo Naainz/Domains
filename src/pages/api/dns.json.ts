@@ -13,31 +13,62 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const dnsRecords = await dns.resolveAny(domain);
-    const formattedRecords = dnsRecords.map(record => {
-      switch (record.type) {
-        case 'A':
-          return `A (IPv4): ${record.address}`;
-        case 'AAAA':
-          return `AAAA (IPv6): ${record.address}`;
-        case 'CNAME':
-          return `CNAME: ${record.value}`;
-        case 'MX':
-          return `MX (Mail Exchanger): Priority: ${record.priority}, Exchange: ${record.exchange}`;
-        case 'NS':
-          return `NS (Name Server): ${record.value}`;
-        case 'TXT':
-          return `TXT: ${record.entries.join(' ')}`;
-        case 'SRV':
-          return `SRV (Service): Priority: ${record.priority}, Weight: ${record.weight}, Port: ${record.port}, Target: ${record.name}`;
-        case 'SOA':
-          return `SOA (Start of Authority): ${JSON.stringify(record)}`;
-        default:
-          return `Unknown record type: ${JSON.stringify(record)}`;
-      }
-    });
+    const dnsData = [];
 
-    return new Response(JSON.stringify({ dnsData: formattedRecords.join('\n') }), {
+    try {
+      const aRecords = await dns.resolve(domain, 'A');
+      dnsData.push(...aRecords.map(ip => `A (IPv4): ${ip}`));
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    try {
+      const aaaaRecords = await dns.resolve(domain, 'AAAA');
+      dnsData.push(...aaaaRecords.map(ip => `AAAA (IPv6): ${ip}`));
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    try {
+      const cnameRecords = await dns.resolve(domain, 'CNAME');
+      dnsData.push(...cnameRecords.map(cname => `CNAME: ${cname}`));
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    try {
+      const mxRecords = await dns.resolve(domain, 'MX');
+      dnsData.push(...mxRecords.map(mx => `MX (Mail Exchanger): Priority: ${mx.priority}, Exchange: ${mx.exchange}`));
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    try {
+      const nsRecords = await dns.resolve(domain, 'NS');
+      dnsData.push(...nsRecords.map(ns => `NS (Name Server): ${ns}`));
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    try {
+      const txtRecords = await dns.resolve(domain, 'TXT');
+      dnsData.push(...txtRecords.map(txt => `TXT: ${txt.join(' ')}`));
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    try {
+      const soaRecords = await dns.resolve(domain, 'SOA');
+      dnsData.push(`SOA (Start of Authority): ${JSON.stringify(soaRecords)}`);
+    } catch (error) {
+      if (error.code !== 'ENODATA') throw error;
+    }
+
+    if (dnsData.length === 0) {
+      dnsData.push('No DNS records available.');
+    }
+
+    return new Response(JSON.stringify({ dnsData: dnsData.join('\n') }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {

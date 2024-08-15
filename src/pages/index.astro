@@ -126,21 +126,26 @@ import Layout from '../layouts/Layout.astro';
         }
       };
 
-      const fetchDnsData = async (domainName, index) => {
-        const dnsDataDiv = document.getElementById(`dns-data-${index}`).querySelector('pre');
-        if (dnsDataDiv.parentElement.classList.contains('hidden')) {
-          dnsDataDiv.parentElement.classList.remove('hidden');
-          try {
-            const response = await fetch(`/api/dns.json?domain=${domainName}`);
-            const result = await response.json();
-            dnsDataDiv.textContent = result.dnsData || 'No DNS records available.';
-          } catch (error) {
-            dnsDataDiv.textContent = 'Error retrieving DNS data.';
-          }
-        } else {
-          dnsDataDiv.parentElement.classList.add('hidden');
-        }
-      };
+	  const fetchDnsData = async (domainName, index) => {
+		const dnsDataDiv = document.getElementById(`dns-data-${index}`).querySelector('pre');
+		if (dnsDataDiv.parentElement.classList.contains('hidden')) {
+			dnsDataDiv.parentElement.classList.remove('hidden');
+			try {
+			const response = await fetch(`/api/dns.json?domain=${domainName}`);
+			const result = await response.json();
+			if (result.dnsData) {
+				dnsDataDiv.textContent = result.dnsData;
+			} else {
+				dnsDataDiv.textContent = result.error || 'No DNS records available.';
+			}
+			} catch (error) {
+			dnsDataDiv.textContent = 'Error retrieving DNS data.';
+			}
+		} else {
+			dnsDataDiv.parentElement.classList.add('hidden');
+		}
+		};
+
 
       window.fetchWhoisData = fetchWhoisData;
       window.fetchDnsData = fetchDnsData;
