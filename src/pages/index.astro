@@ -58,7 +58,6 @@ import Layout from '../layouts/Layout.astro';
       let domain = '';
       let availability = null;
       let whoisData = '';
-
       const validTLDs = [
         'com', 'net', 'org', 'edu', 'gov', 'co', 'io', 'biz', 'info', 'me', 'us', 'uk', 'ca', 'de', 'jp', 'fr',
         'au', 'eu', 'cn', 'in', 'br', 'ru', 'za', 'nz'
@@ -103,7 +102,9 @@ import Layout from '../layouts/Layout.astro';
               <p class="font-medium">${registrarName}</p>
               ${hiddenInfo}
               <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domainName}', ${index})">Show WHOIS Data</button>
+              <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domainName}', ${index})">DNS</button>
               <div id="whois-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
+              <div id="dns-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
             </div>
           `;
         }).join('');
@@ -125,7 +126,24 @@ import Layout from '../layouts/Layout.astro';
         }
       };
 
+      const fetchDnsData = async (domainName, index) => {
+        const dnsDataDiv = document.getElementById(`dns-data-${index}`).querySelector('pre');
+        if (dnsDataDiv.parentElement.classList.contains('hidden')) {
+          dnsDataDiv.parentElement.classList.remove('hidden');
+          try {
+            const response = await fetch(`/api/dns.json?domain=${domainName}`);
+            const result = await response.json();
+            dnsDataDiv.textContent = result.dnsData || 'No DNS records available.';
+          } catch (error) {
+            dnsDataDiv.textContent = 'Error retrieving DNS data.';
+          }
+        } else {
+          dnsDataDiv.parentElement.classList.add('hidden');
+        }
+      };
+
       window.fetchWhoisData = fetchWhoisData;
+      window.fetchDnsData = fetchDnsData;
 
       domainInput.addEventListener('input', (e) => {
         const target = e.target as HTMLInputElement;
@@ -156,7 +174,9 @@ import Layout from '../layouts/Layout.astro';
                 <h2 class="font-bold">${domain}</h2>
                 <p class="font-medium">${availability}</p>
                 <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domain}', 0)">Show WHOIS Data</button>
+                <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
                 <div id="whois-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre>${whoisData}</pre></div>
+                <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
               </div>
             `;
           } catch (error) {
