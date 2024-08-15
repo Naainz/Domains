@@ -56,8 +56,6 @@ import Layout from '../layouts/Layout.astro';
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       let domain = '';
-      let availability = null;
-      let whoisData = '';
       const validTLDs = [
         'com', 'net', 'org', 'edu', 'gov', 'co', 'io', 'biz', 'info', 'me', 'us', 'uk', 'ca', 'de', 'jp', 'fr',
         'au', 'eu', 'cn', 'in', 'br', 'ru', 'za', 'nz'
@@ -92,65 +90,65 @@ import Layout from '../layouts/Layout.astro';
         `;
       };
 
-      const displayResults = (results) => {
-        resultContainer.innerHTML = results.map((result, index) => {
-          const { domainName, registrarName, additionalInfo } = result;
-          const hiddenInfo = additionalInfo ? `<p class="text-sm text-gray-500">${additionalInfo}</p>` : '';
-          return `
-            <div class="cursor-pointer p-4 mb-4 border rounded-md shadow-sm text-left hover:bg-gray-100" id="result-card-${index}">
-              <h2 class="font-bold">${domainName}</h2>
-              <p class="font-medium">${registrarName}</p>
-              ${hiddenInfo}
-              <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domainName}', ${index})">Show WHOIS Data</button>
-              <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domainName}', ${index})">DNS</button>
-              <div id="whois-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre></pre></div>
-              <div id="dns-data-${index}" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre></pre></div>
-            </div>
-          `;
-        }).join('');
+      const displayResults = (availabilityText, whoisData) => {
+        resultContainer.innerHTML = `
+          <div class="p-4 mb-4 border rounded-md shadow-sm text-left hover:bg-gray-100">
+            <h2 class="font-bold">${domain}</h2>
+            ${availabilityText}
+            <button class="mt-2 text-blue-500 text-sm" onclick="toggleVisibility('whois-data')">Show WHOIS Data</button>
+            <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
+            <div id="whois-data" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre>${whoisData}</pre></div>
+            <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre>No DNS data fetched yet.</pre></div>
+          </div>
+        `;
       };
 
-      const fetchWhoisData = async (domainName, index) => {
-        const whoisDataDiv = document.getElementById(`whois-data-${index}`).querySelector('pre');
-        if (whoisDataDiv.parentElement.classList.contains('hidden')) {
-          whoisDataDiv.parentElement.classList.remove('hidden');
-          try {
-            const response = await fetch(`/api/check-domain.json?domain=${domainName}`);
-            const result = await response.json();
-            whoisDataDiv.textContent = result.whoisData || 'No WHOIS data available.';
-          } catch (error) {
-            whoisDataDiv.textContent = 'Error retrieving WHOIS data.';
-          }
-        } else {
-          whoisDataDiv.parentElement.classList.add('hidden');
+      // Make the toggleVisibility function globally accessible
+      window.toggleVisibility = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.classList.toggle('hidden');
         }
       };
 
+      // Fetch DNS Data
       const fetchDnsData = async (domainName, index) => {
-        const dnsDataDiv = document.getElementById(`dns-data-${index}`).querySelector('pre');
-        if (dnsDataDiv.parentElement.classList.contains('hidden')) {
-          dnsDataDiv.parentElement.classList.remove('hidden');
+        const dnsDataDiv = document.getElementById(`dns-data-${index}`);
+        if (dnsDataDiv) {
           try {
             const response = await fetch(`/api/dns.json?domain=${domainName}`);
             const result = await response.json();
-            dnsDataDiv.textContent = result.dnsData || 'No DNS records available.';
+            dnsDataDiv.innerHTML = `<pre>${result.dnsData || 'No DNS records available.'}</pre>`;
+            dnsDataDiv.classList.remove('hidden');
           } catch (error) {
-            dnsDataDiv.textContent = 'Error retrieving DNS data.';
+            dnsDataDiv.innerHTML = `<pre>Error retrieving DNS data.</pre>`;
+            dnsDataDiv.classList.remove('hidden');
           }
-        } else {
-          dnsDataDiv.parentElement.classList.add('hidden');
         }
       };
 
-      window.fetchWhoisData = fetchWhoisData;
-      window.fetchDnsData = fetchDnsData;
+      const fetchWhoisData = async (domainName) => {
+        showLoading();
+        try {
+          const response = await fetch(`/api/check-domain.json?domain=${domainName}`);
+          const result = await response.json();
+          const whoisData = result.whoisData || 'No WHOIS data available.';
 
-      domainInput.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement;
-        domain = target.value;
-      });
+          const isNotRegistered = whoisData.toLowerCase().includes('not found');
+          const availabilityText = isNotRegistered 
+            ? `<p class="font-medium text-green-500">Not Registered</p>`
+            : `<p class="font-medium text-red-500">Registered</p>`;
 
-      checkButton.addEventListener('click', async () => {
+          displayResults(availabilityText, whoisData);
+        } catch (error) {
+          console.error('Error fetching WHOIS data:', error);
+          resultContainer.innerHTML = `<p class="text-red-500">Error retrieving WHOIS data for "${domainName}".</p>`;
+        }
+      };
+
+      checkButton.addEventListener('click', () => {
+        domain = domainInput.value.trim();
+        
         if (domain.includes(' ')) {
           resultContainer.innerHTML = '<p class="text-red-500">Invalid entry: domain name cannot contain spaces.</p>';
           return;
@@ -162,46 +160,7 @@ import Layout from '../layouts/Layout.astro';
         }
 
         if (domain) {
-          showLoading();
-          try {
-            const response = await fetch(`/api/check-domain.json?domain=${domain}`);
-            const result = await response.json();
-            availability = result.available ? 'Available' : 'Registered';
-            whoisData = result.whoisData || '';
-
-            resultContainer.innerHTML = `
-              <div class="cursor-pointer p-4 mb-4 border rounded-md shadow-sm text-left hover:bg-gray-100">
-                <h2 class="font-bold">${domain}</h2>
-                <p class="font-medium">${availability}</p>
-                <button class="mt-2 text-blue-500 text-sm" onclick="fetchWhoisData('${domain}', 0)">Show WHOIS Data</button>
-                <button class="mt-2 ml-4 text-blue-500 text-sm" onclick="fetchDnsData('${domain}', 0)">DNS</button>
-                <div id="whois-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md"><pre>${whoisData}</pre></div>
-                <div id="dns-data-0" class="hidden mt-2 bg-gray-800 text-white p-2 rounded-md overflow-x-auto"><pre></pre></div>
-              </div>
-            `;
-          } catch (error) {
-            console.error('Error checking domain:', error);
-            resultContainer.innerHTML = `<p class="text-red-500">Error checking domain "${domain}".</p>`;
-          }
-        }
-      });
-
-      searchAlternativeButton.addEventListener('click', async () => {
-        const nameserver = nameserverInput.value.trim();
-        const registrar = registrarInput.value.trim();
-
-        if (!nameserver && !registrar) {
-          resultContainer.innerHTML = '<p class="text-red-500">Please provide a nameserver or registrar name to search.</p>';
-          return;
-        }
-
-        showLoading();
-
-        const simulatedResults = [];
-        if (simulatedResults.length > 99) {
-          resultContainer.innerHTML = '<p class="text-blue-500">99+ (HIDDEN)</p>';
-        } else {
-          displayResults(simulatedResults);
+          fetchWhoisData(domain);
         }
       });
     });
